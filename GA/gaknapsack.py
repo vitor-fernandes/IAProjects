@@ -18,6 +18,7 @@
 ################################################################################
 
 from random import sample, randint
+from operator import itemgetter
 
 
 class GA(object):
@@ -67,7 +68,12 @@ class GA(object):
         # Lembre-se que o número de objetos que deve ser criado está especificado no
         # construtor.
 
-        pass
+        list_objects = []
+
+        for i in range(self.n_objects):
+            list_objects.append({"value": randint(1, self.n_objects), "weight": randint(0, self.max_weight)})
+
+        return list_objects
 
     def start_generation(self):
         # TODO: este método cria e retorna uma lista com os indivíduos da primeira geração.
@@ -85,7 +91,24 @@ class GA(object):
         # Na primeira geração, os indivíduos são criados aleatoriamente.
         # Lembre-se que a quantidade de objetos e o tamanho da geração são especificados
         # no construtor.
-        pass
+        
+        first_generation_individuals = []
+        for i in range(self.generation_size):
+            aux_list = []
+            for j in range(self.n_objects):
+                aux_list.append(randint(0, 1))
+            
+            try:
+                has_put_item = aux_list.index(1)
+
+            except ValueError:
+                print(aux_list)
+                random_index = randint(0, 4)
+                aux_list[random_index] = 1
+
+            first_generation_individuals.append(aux_list)
+        
+        return first_generation_individuals
 
     def fitness(self, solution):
         # TODO: este método calcula e retorna o fitness de um indivíduo.
@@ -99,13 +122,30 @@ class GA(object):
         # (peso total dos objetos - peso total suportado)*max_weight_penalty
         #
         # O parâmetro solution é o indivíduo que terá seu fitness calculado.
-        pass
+
+        total_individual_weight = self.weight(solution)
+
+        if(total_individual_weight > self.max_weight):
+            last_index = 0
+            for i in range(len(solution)):
+                if(solution[i]): last_index = i
+            
+            total_individual_weight = (self.objects[last_index]['value'] - self.max_weight) * self.max_weight_penalty
+
+        return total_individual_weight
 
     def weight(self, solution):
         # TODO: este método calcula e retorna o peso total de um indivíduo.
         #
         # O parâmetro solution é o indivíduo que terá seu peso calculado.
-        pass
+        
+        total_individual_weight = 0
+
+        for i in range(len(solution)):
+            if(solution[i]):
+                total_individual_weight += self.objects[i]['weight']
+            
+        return total_individual_weight
 
     def recombine(self, parent1, parent2):
         # TODO: este método faz a recombinação de 1 ponto dos pais passados como
@@ -114,13 +154,35 @@ class GA(object):
         #
         # Após efetuar a recombinação, o método retorna uma lista com os dois
         # filhos gerados.
-        pass
+
+        children_1 = []
+        children_2 = []
+
+        for i in range(len(parent1)):
+            if(i >= self.crossover_point):
+                children_1.append(parent2[i])
+                children_2.append(parent1[i])
+            else:
+                children_1.append(parent1[i])
+                children_2.append(parent2[i])
+
+        return [children_1, children_2]
 
     def compete(self, solutions):
         # TODO: na seleção por torneio, um conjunto de indivíduos disputa um torneio
         # e apenas o de maior fitness é selecionado. Este método recebe uma lista
         # de indivíduos (parâmetro solutions) e retorna o indivíduo de maior fitness.
-        pass
+
+        bigger_fitness_value = self.fitness(solutions[0])
+        bigger_fitness_individuals = solutions[0]
+
+        for solution in solutions:
+            fitness = self.fitness(solution)
+            if(fitness >= bigger_fitness_value):
+                bigger_fitness_value = fitness
+                bigger_fitness_individuals = solution
+
+        return bigger_fitness_individuals
 
     def next_generation(self):
         """
@@ -162,10 +224,11 @@ if __name__ == "__main__":
     # Altere essa variável para mudar o número de gerações que o
     # algoritmo vai gerar.
     N_GENERATIONS = 10
-  
+    
     for i in range(N_GENERATIONS):
         ga.print_generation()
         print("---------------------")
         ga.next_generation()
 
     ga.print_generation()
+    
